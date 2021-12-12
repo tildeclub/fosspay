@@ -1,0 +1,11 @@
+stripe
+Flask
+Jinja2
+Flask-Misaka
+Flask-Login
+psycopg2
+requests
+bcrypt
+gunicorn
+SQLAlchemy
+SQLAlchemy-Utils

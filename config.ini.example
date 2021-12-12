@@ -1,0 +1,75 @@
+[dev]
+# Change this to the actual location of your site
+# You can include a path in the domain if it's a subdirectory
+# i.e. domain=drewdevault.com/donate
+# omit the trailing slash
+protocol=http
+domain=localhost:5000
+# Change this value to something random and secret
+secret-key=hello world
+
+# On the debug server, this lets you choose what to bind to
+debug-host=0.0.0.0
+debug-port=5000
+
+# Fill out these details with your mail server
+smtp-host=mail.example.org
+smtp-port=587
+smtp-user=you
+smtp-password=password
+smtp-from=donate@example.org
+
+# Your information
+your-name=Joe Bloe
+your-email=joe@example.org
+# ^ you should have a gravatar that works with this email
+
+# SQL connection string
+connection-string=postgresql://postgres@localhost/fosspay
+
+# Stripe API info: https://dashboard.stripe.com/account/apikeys
+stripe-secret=
+stripe-publish=
+
+# Currency to use
+# "usd" for dollar, "eur" for euro
+# refer to stripe documentation for details : https://stripe.com/docs/currencies
+currency=usd
+
+# Separate with spaces
+default-amounts=3 5 10 20
+# Which one to pick when they arrive?
+default-amount=5
+
+# Pick between "monthly" and "once"
+default-type=monthly
+
+# Display monthly donations publicly
+public-income=yes
+
+# How much are you hoping to earn monthly, in cents
+goal=500
+
+# Optional Patreon integration
+# Register a client here: https://www.patreon.com/portal/registration/register-clients
+# And put in the "Creator's Access Token" here:
+patreon-access-token=
+# And the "Creator's Refresh Token" here:
+patreon-refresh-token=
+# Client ID
+patreon-client-id=
+# Client secret
+patreon-client-secret=
+# And the Patreon campaign you want to connect with:
+patreon-campaign=
+
+# Optional LiberaPay integration, fill in your username here
+liberapay-campaign=
+
+# Optional GitHub sponsors integration
+# Generate personal access key at https://github.com/settings/tokens
+# Must have "user" access.
+github-token=
+
+# Command to reload fosspay (send it a SIGHUP)
+reload-command=kill -HUP $(pgrep -xf '/usr/bin/python3.*app.py' | tail -n 1)
