@@ -20,33 +20,41 @@
       {% set gh_progress = gh_sum / adjusted_goal %}
       {% set progress = total_sum / goal %}
       <div class="progress" style="height: 3rem">
+        {% if recurring_sum %}
         <div
           class="progress-bar progress-bar-primary"
-          style="width: {{ recurring_progress * 100 }}%; line-height: 2.5"
+          style="width: {{ recurring_progress * 100 }}%; min-width: 0; line-height: 2.5"
         >
           <span>{{ currency.amount("{:.0f}".format(recurring_sum / 100)) }}</span>
         </div>
+        {% endif %}
 
+        {% if patreon_sum %}
         <div
           class="progress-bar progress-bar-info"
-          style="width: {{ patreon_progress * 100 }}%; line-height: 2.5"
+          style="width: {{ patreon_progress * 100 }}%; min-width: 0; line-height: 2.5"
         >
           <span>{{ currency.amount("{:.0f}".format(patreon_sum / 100)) }}</span>
         </div>
+        {% endif %}
 
+        {% if lp_sum %}
         <div
           class="progress-bar progress-bar-warning"
-          style="width: {{ lp_progress * 100 }}%; line-height: 2.5"
+          style="width: {{ lp_progress * 100 }}%; min-width: 0; line-height: 2.5"
         >
           <span>{{ currency.amount("{:.0f}".format(lp_sum / 100)) }}</span>
         </div>
+        {% endif %}
 
+        {% if gh_sum %}
         <div
           class="progress-bar progress-bar-primary"
-          style="width: {{ gh_progress * 100 }}%; line-height: 2.5"
+          style="width: {{ gh_progress * 100 }}%; min-width: 0; line-height: 2.5"
         >
           <span>{{ currency.amount("{:.0f}".format(gh_sum / 100)) }}</span>
         </div>
+        {% endif %}
       </div>
       {% endif %}
     </div>
@@ -89,7 +97,7 @@
           class="text-primary"
           href="https://github.com/{{gh_user}}">
             GitHub <i class="glyphicon glyphicon-share"></i>
-          </a></strong> ({{ gh_count }} supporter{{ "s" if lp_count != 1 else "" }})
+          </a></strong> ({{ gh_count }} supporter{{ "s" if gh_count != 1 else "" }})
       </p>
       {% endif %}
       {% endif %}

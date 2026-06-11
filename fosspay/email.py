@@ -1,3 +1,8 @@
+# fosspay/email.py
+# ───────────────────────────────────────────────────────────────
+# Only change: smarter SMTP opener that works with either SMTPS (465)
+# or STARTTLS (587/25).  All calling functions now use it.
+# ───────────────────────────────────────────────────────────────
 import smtplib
 import os
 import html.parser
@@ -12,12 +17,28 @@ from fosspay.objects import User, DonationType
 from fosspay.config import _cfg, _cfgi
 from fosspay.currency import currency
 
-def send_thank_you(user, amount, monthly):
+
+# helper: open & log in using the right TLS mode
+def _open_smtp():
     if _cfg("smtp-host") == "":
-        return
-    smtp = smtplib.SMTP_SSL(_cfg("smtp-host"), _cfgi("smtp-port"))
+        return None
+    host = _cfg("smtp-host")
+    port = _cfgi("smtp-port")
+    if port == 465:                                 # implicit TLS
+        smtp = smtplib.SMTP_SSL(host, port)
+    else:                                           # STARTTLS pathway
+        smtp = smtplib.SMTP(host, port)
+        smtp.ehlo()
+        smtp.starttls()
     smtp.ehlo()
     smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
+    return smtp
+
+
+def send_thank_you(user, amount, monthly):
+    smtp = _open_smtp()
+    if smtp is None:
+        return
     with open("emails/thank-you") as f:
         tmpl = Template(f.read())
         message = MIMEText(tmpl.substitute(**{
@@ -31,15 +52,14 @@ def send_thank_you(user, amount, monthly):
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
     message['Date'] = format_datetime(localtime())
-    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [user.email], message.as_string())
     smtp.quit()
 
+
 def send_password_reset(user):
-    if _cfg("smtp-host") == "":
+    smtp = _open_smtp()
+    if smtp is None:
         return
-    smtp = smtplib.SMTP_SSL(_cfg("smtp-host"), _cfgi("smtp-port"))
-    smtp.ehlo()
-    smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/reset-password") as f:
         tmpl = Template(f.read())
         message = MIMEText(tmpl.substitute(**{
@@ -52,15 +72,14 @@ def send_password_reset(user):
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
     message['Date'] = format_datetime(localtime())
-    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [user.email], message.as_string())
     smtp.quit()
 
+
 def send_declined(user, amount):
-    if _cfg("smtp-host") == "":
+    smtp = _open_smtp()
+    if smtp is None:
         return
-    smtp = smtplib.SMTP_SSL(_cfg("smtp-host"), _cfgi("smtp-port"))
-    smtp.ehlo()
-    smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/declined") as f:
         tmpl = Template(f.read())
         message = MIMEText(tmpl.substitute(**{
@@ -72,15 +91,14 @@ def send_declined(user, amount):
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
     message['Date'] = format_datetime(localtime())
-    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [user.email], message.as_string())
     smtp.quit()
 
+
 def send_new_donation(user, donation):
-    if _cfg("smtp-host") == "":
+    smtp = _open_smtp()
+    if smtp is None:
         return
-    smtp = smtplib.SMTP_SSL(_cfg("smtp-host"), _cfgi("smtp-port"))
-    smtp.ehlo()
-    smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/new_donation") as f:
         tmpl = Template(f.read())
         message = MIMEText(tmpl.substitute(**{
@@ -96,15 +114,14 @@ def send_new_donation(user, donation):
     message['From'] = _cfg("smtp-from")
     message['To'] = f"{_cfg('your-name')} <{_cfg('your-email')}>"
     message['Date'] = format_datetime(localtime())
-    smtp.sendmail(_cfg("smtp-from"), [ _cfg('your-email') ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [_cfg('your-email')], message.as_string())
     smtp.quit()
 
+
 def send_cancellation_notice(user, donation):
-    if _cfg("smtp-host") == "":
+    smtp = _open_smtp()
+    if smtp is None:
         return
-    smtp = smtplib.SMTP_SSL(_cfg("smtp-host"), _cfgi("smtp-port"))
-    smtp.ehlo()
-    smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/cancelled") as f:
         tmpl = Template(f.read())
         message = MIMEText(tmpl.substitute(**{
@@ -118,5 +135,5 @@ def send_cancellation_notice(user, donation):
     message['From'] = _cfg("smtp-from")
     message['To'] = f"{_cfg('your-name')} <{_cfg('your-email')}>"
     message['Date'] = format_datetime(localtime())
-    smtp.sendmail(_cfg("smtp-from"), [ _cfg('your-email') ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [_cfg('your-email')], message.as_string())
     smtp.quit()

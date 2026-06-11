@@ -71,42 +71,54 @@ def index():
         lp_count = 0
         lp_sum = 0
 
+
+    # ── GitHub Sponsors totals ────────────────────────────────────────
     github_token = _cfg("github-token")
     if github_token:
-        query = """
-        {
-            viewer {
-                login
-                sponsorsListing {
-                    tiers(first:100) {
-                        nodes {
-                            monthlyPriceInCents
-                            adminInfo {
-                                sponsorships(includePrivate:true) {
-                                    totalCount
+        try:
+            query = """
+            {
+                viewer {
+                    login
+                    sponsorsListing {
+                        tiers(first:100) {
+                            nodes {
+                                monthlyPriceInCents
+                                adminInfo {
+                                    sponsorships(includePrivate:true) {
+                                        totalCount
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-        """
-        r = requests.post("https://api.github.com/graphql", json={
-            "query": query
-        }, headers={
-            "Authorization": f"bearer {github_token}"
-        })
-        result = r.json()
-        nodes = result["data"]["viewer"]["sponsorsListing"]["tiers"]["nodes"]
-        cnt = lambda n: n["adminInfo"]["sponsorships"]["totalCount"]
-        gh_count = sum(cnt(n) for n in nodes)
-        gh_sum = sum(n["monthlyPriceInCents"] * cnt(n) for n in nodes)
-        gh_user = result["data"]["viewer"]["login"]
+            """
+            r = requests.post(
+                "https://api.github.com/graphql",
+                json={"query": query},
+                headers={"Authorization": f"bearer {github_token}"}
+            )
+            result  = r.json()
+            viewer   = (result.get("data") or {}).get("viewer") or {}
+            gh_user  = viewer.get("login")
+            listing  = viewer.get("sponsorsListing") or {}
+            tiers    = (listing.get("tiers") or {}).get("nodes") or []
+
+            cnt = lambda n: n["adminInfo"]["sponsorships"]["totalCount"]
+            gh_count = sum(cnt(n) for n in tiers)
+            gh_sum   = sum(n["monthlyPriceInCents"] * cnt(n) for n in tiers)
+
+        except Exception:
+            gh_count = 0
+            gh_sum   = 0
+            gh_user  = None
     else:
         gh_count = 0
-        gh_sum = 0
-        gh_user = None
+        gh_sum   = 0
+        gh_user  = None
+
 
     return render_template("index.html", projects=projects,
             avatar=avatar, selected_project=selected_project,
@@ -236,7 +248,7 @@ def donate():
         db.add(user)
     else:
         customer = stripe.Customer.retrieve(user.stripe_customer)
-        new_source = customer.sources.create(source=stripe_token)
+        new_source = customer.create_source(user.stripe_customer, source=stripe_token)
         customer.default_source = new_source.id
         customer.save()
 
