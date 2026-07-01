@@ -269,8 +269,14 @@ def donate():
 
     db.commit()
 
-    send_thank_you(user, amount, type == DonationType.monthly)
-    send_new_donation(user, donation)
+    try:
+        send_thank_you(user, amount, type == DonationType.monthly)
+    except Exception as e:
+        print(f"Thank-you email failed: {e}")
+    try:
+        send_new_donation(user, donation)
+    except Exception as e:
+        print(f"New donation email failed: {e}")
 
     if new_account:
         return { "success": True, "new_account": new_account, "password_reset": user.password_reset }
@@ -283,7 +289,11 @@ def issue_password_reset(email):
         return render_template("reset.html", errors="No one with that email found.")
     user.password_reset = binascii.b2a_hex(os.urandom(20)).decode("utf-8")
     user.password_reset_expires = datetime.now() + timedelta(days=1)
-    send_password_reset(user)
+    try:
+        send_password_reset(user)
+    except Exception as e:
+        print(f"Password reset email failed: {e}")
+        return render_template("reset.html", errors="Could not send password reset email.")
     db.commit()
     return render_template("reset.html", done=True)
 
@@ -346,7 +356,10 @@ def cancel(id):
         abort(400)
     donation.active = False
     db.commit()
-    send_cancellation_notice(current_user, donation)
+    try:
+        send_cancellation_notice(current_user, donation)
+    except Exception as e:
+        print(f"Cancellation email failed: {e}")
     return redirect("../panel")
 
 @html.route("/invoice/<id>")

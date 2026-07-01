@@ -46,14 +46,20 @@ for donation in donations:
         except stripe.error.CardError:
             donation.active = False
             db.commit()
-            send_declined(user, donation.amount)
+            try:
+                send_declined(user, donation.amount)
+            except Exception as e:
+                print(f"  • declined email failed: {e}")
             print("  • declined")
             continue
 
-        send_thank_you(user, donation.amount, True)
         donation.updated = datetime.now()
         donation.payments += 1
         db.commit()
+        try:
+            send_thank_you(user, donation.amount, True)
+        except Exception as e:
+            print(f"  • thank-you email failed: {e}")
     else:
         print(f"Skipping {donation}")
 
